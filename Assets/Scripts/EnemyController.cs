@@ -8,8 +8,8 @@ public class EnemyController : MonoBehaviour
 
     public float gravity = 9.81f; //重力
 
-    public float speedZ = -10; //前進方向のスピードの上限値
-    public float accelerationZ = -8; //加速度
+    public float speedZ = -10f; //前進方向のスピードの上限値
+    public float accelerationZ = -8f; //加速度
 
     public float deletePosY = -10f; //削除される基準のY座標値
     public bool useGravity; //重力に絞られるか空を飛ぶかのフラグ
