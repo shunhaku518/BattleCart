@@ -15,27 +15,34 @@ public class PlayerController : MonoBehaviour
     Vector3 moveDirection = Vector3.zero;
     int targetLane;
 
-    public float gravity = 9.81f; //d—Í
+    public float gravity = 9.81f; //ï¿½dï¿½ï¿½
 
-    public float speedZ = 10; //‘Oi•ûŒü‚ÌƒXƒs[ƒh‚ÌãŒÀ’l
-    public float accelerationZ = 8; //‰Á‘¬“x
+    public float speedZ = 10; //ï¿½Oï¿½iï¿½ï¿½ï¿½ï¿½ï¿½ÌƒXï¿½sï¿½[ï¿½hï¿½Ìï¿½ï¿½ï¿½l
+    public float accelerationZ = 8; //ï¿½ï¿½ï¿½ï¿½ï¿½x
 
-    public float speedX = 10; //‰¡•ûŒü‚ÉˆÚ“®‚·‚é‚Æ‚«‚ÌƒXƒs[ƒh
+    public float speedX = 10; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÉˆÚ“ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½ÌƒXï¿½sï¿½[ï¿½h
 
-    public float speedJump = 10; //ƒWƒƒƒ“ƒvƒXƒs[ƒh
+    public float speedJump = 10; //ï¿½Wï¿½ï¿½ï¿½ï¿½ï¿½vï¿½Xï¿½sï¿½[ï¿½h
 
     public GameObject body;
 
     public GameObject boms;
 
+    //éŸ³ã«ã¾ã¤ã‚ã‚‹ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã¨SEéŸ³æƒ…å ±
+    AudioSource audio;
+    public AudioClip se_shot;
+    public AudioClip se_damage;
+    public AudioClip se_jump;
+
     void Start()
     {
+        audio = GetComponent<AudioSource>();
         controller = GetComponent<CharacterController>();
     }
 
     void Update()
     {
-        //ƒQ[ƒ€ƒXƒe[ƒ^ƒX‚ªplaying‚Ì‚Ì‚İ¶‰E‚É“®‚©‚¹‚é
+        //ï¿½Qï¿½[ï¿½ï¿½ï¿½Xï¿½eï¿½[ï¿½^ï¿½Xï¿½ï¿½playingï¿½Ìï¿½ï¿½Ì‚İï¿½ï¿½Eï¿½É“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (GameManager.gameState == GameState.playing)
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) MoveToLeft();
@@ -43,41 +50,44 @@ public class PlayerController : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space)) Jump();
         }
 
-        //‚à‚µƒXƒ^ƒ“’†‚©Life‚ª0‚È‚ç“®‚«‚ğ~‚ß‚é
+        //ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Lifeï¿½ï¿½0ï¿½È‚ç“®ï¿½ï¿½ï¿½ï¿½ï¿½~ï¿½ß‚ï¿½
         if (IsStun())
         {
             moveDirection.x = 0;
             moveDirection.z = 0;
-            //•œŠˆ‚Ü‚Å‚ÌŠÔ‚ğƒJƒEƒ“ƒg
+            //ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚Å‚Ìï¿½ï¿½Ô‚ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½g
             recoverTime -= Time.deltaTime;
 
-            //“_–Åˆ—
+            //ï¿½_ï¿½Åï¿½ï¿½ï¿½
             Blinking();
         }
         else
         {
-            //™X‚É‰Á‘¬‚µZ•ûŒü‚Éí‚É‘Oi‚³‚¹‚é
+            //ï¿½ï¿½ï¿½Xï¿½É‰ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½ï¿½ï¿½Éï¿½É‘Oï¿½iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             float acceleratedZ = moveDirection.z + (accelerationZ * Time.deltaTime);
             moveDirection.z = Mathf.Clamp(acceleratedZ, 0, speedZ);
 
-            //X•ûŒü‚Í–Ú•W‚Ìƒ|ƒWƒVƒ‡ƒ“‚Ü‚Å‚Ì·•ª‚ÌŠ„‡‚Å‘¬“x‚ğŒvZ
+            //Xï¿½ï¿½ï¿½ï¿½ï¿½Í–Ú•Wï¿½Ìƒ|ï¿½Wï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½Ü‚Å‚Ìï¿½ï¿½ï¿½ï¿½ÌŠï¿½ï¿½ï¿½ï¿½Å‘ï¿½ï¿½xï¿½ï¿½ï¿½vï¿½Z
             float ratioX = (targetLane * LaneWidth - transform.position.x) / LaneWidth;
             moveDirection.x = ratioX * speedX;
         }
 
-        //d—Í•ª‚Ì—Í‚ğƒtƒŒ[ƒ€’Ç‰Á
+        //ï¿½dï¿½Í•ï¿½ï¿½Ì—Í‚ï¿½ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ç‰ï¿½
         moveDirection.y -= gravity * Time.deltaTime;
 
-        //ˆÚ“®Às
+        //ï¿½Ú“ï¿½ï¿½ï¿½ï¿½s
         Vector3 globalDirection = transform.TransformDirection(moveDirection);
         controller.Move(globalDirection * Time.deltaTime);
 
-        //ˆÚ“®ŒãÚ’n‚µ‚Ä‚½‚çY•ûŒü‚Ì‘¬“x‚ÍƒŠƒZƒbƒg‚·‚é
+        //ï¿½Ú“ï¿½ï¿½ï¿½Ú’nï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½Ì‘ï¿½ï¿½xï¿½Íƒï¿½ï¿½Zï¿½bï¿½gï¿½ï¿½ï¿½ï¿½
         if (controller.isGrounded) moveDirection.y = 0;
+
+        //1ï¿½bï¿½ï¿½1ï¿½ï¿½ï¿½Âƒgï¿½bï¿½vï¿½Xï¿½sï¿½[ï¿½hï¿½Ìï¿½ï¿½ï¿½lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
+        speedZ += Time.deltaTime;
 
     }
 
-    //¶‚ÌƒŒ[ƒ“‚ÉˆÚ“®‚ğŠJn
+    //ï¿½ï¿½ï¿½Ìƒï¿½ï¿½[ï¿½ï¿½ï¿½ÉˆÚ“ï¿½ï¿½ï¿½ï¿½Jï¿½n
     public void MoveToLeft()
     {
         if (IsStun()) return;
@@ -85,7 +95,7 @@ public class PlayerController : MonoBehaviour
             targetLane--;
     }
 
-    //Ë‚ÌƒŒ[ƒ“‚ÉˆÚ“®‚ğŠJn
+    //ï¿½Ë‚Ìƒï¿½ï¿½[ï¿½ï¿½ï¿½ÉˆÚ“ï¿½ï¿½ï¿½ï¿½Jï¿½n
     public void MoveToRight()
     {
         if (IsStun()) return;
@@ -93,64 +103,95 @@ public class PlayerController : MonoBehaviour
             targetLane++;
     }
 
-    //ƒWƒƒƒ“ƒv
+    //ï¿½Wï¿½ï¿½ï¿½ï¿½ï¿½v
     public void Jump()
     {
         if (IsStun()) return;
-        //’n–Ê‚ÉÚG‚µ‚Ä‚¢‚ê‚ÎY•ûŒü‚Ì—Í‚ğİ’è
-        if (controller.isGrounded) moveDirection.y = speedJump;
+        //ï¿½nï¿½Ê‚ÉÚGï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½Ì—Í‚ï¿½İ’ï¿½
+        if (controller.isGrounded)
+        {
+            SEPlay(SEType.Jump); //ã‚¸ãƒ£ãƒ³ãƒ—éŸ³ã‚’é³´ã‚‰ã™
+            moveDirection.y = speedJump;
+        }
     }
 
-    //‘Ì—Í‚ğƒŠƒ^[ƒ“
+    //ï¿½Ì—Í‚ï¿½ï¿½ï¿½ï¿½^ï¿½[ï¿½ï¿½
     public int Life()
     {
         return life;
     }
 
-    //ƒXƒ^ƒ“’†‚©ƒ`ƒFƒbƒN
+    //ï¿½Xï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`ï¿½Fï¿½bï¿½N
     bool IsStun()
     {
-        //recoverTime‚ªì“®’†‚©Life‚ª0‚É‚È‚Á‚½ê‡‚ÍStunƒtƒ‰ƒO‚ªON
+        //recoverTimeï¿½ï¿½ï¿½ì“®ï¿½ï¿½ï¿½ï¿½Lifeï¿½ï¿½0ï¿½É‚È‚ï¿½ï¿½ï¿½ï¿½ê‡ï¿½ï¿½Stunï¿½tï¿½ï¿½ï¿½Oï¿½ï¿½ON
         bool stun = recoverTime > 0.0f || life <= 0;
-        //Stunƒtƒ‰ƒO‚ªOFF‚Ìê‡‚Íƒ{ƒfƒB‚ğŠmÀ‚É•\¦
+        //Stunï¿½tï¿½ï¿½ï¿½Oï¿½ï¿½OFFï¿½Ìê‡ï¿½Íƒ{ï¿½fï¿½Bï¿½ï¿½ï¿½mï¿½ï¿½ï¿½É•\ï¿½ï¿½
         if (!stun) body.SetActive(true);
-        //Stunƒtƒ‰ƒO‚ğƒŠƒ^[ƒ“
+        //Stunï¿½tï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½ï¿½^ï¿½[ï¿½ï¿½
         return stun;
     }
 
-    //ÚG”»’è
+    //ï¿½ÚGï¿½ï¿½ï¿½ï¿½
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         if (IsStun()) return;
 
-        //‚Ô‚Â‚©‚Á‚½‘Šè‚ªEnemy‚È‚ç
+        //ï¿½Ô‚Â‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è‚ªEnemyï¿½È‚ï¿½
         if (hit.gameObject.CompareTag("Enemy"))
         {
-            //‘Ì—Í‚ğƒ}ƒCƒiƒX
+            //ï¿½Ì—Í‚ï¿½ï¿½}ï¿½Cï¿½iï¿½X
             life--;
+
+            SEPlay(SEType.Damage); //ãƒ€ãƒ¡ãƒ¼ã‚¸éŸ³ã‚’é³´ã‚‰ã™
+
+
+            //ï¿½Xï¿½sï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½bï¿½g
+            speedZ = 10;
 
             if (life <= 0)
             {
+                SoundManager.instance.StopBgm(); //æ›²ã‚’æ­¢ã‚ã‚‹
+
+                //ï¿½Qï¿½[ï¿½ï¿½ï¿½Iï¿½[ï¿½oï¿½[ï¿½É‚È‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚ï¿½ï¿½Ìï¿½ï¿½Ìƒ|ï¿½Wï¿½Vï¿½ï¿½ï¿½ï¿½zï¿½Ìï¿½ï¿½Wï¿½ï¿½Scoreï¿½Lï¿½[ï¿½ï¿½ï¿½[ï¿½hï¿½Åƒpï¿½\ï¿½Rï¿½ï¿½ï¿½É•Û‘ï¿½
+                PlayerPrefs.SetFloat("Score", transform.position.z);
+
                 GameManager.gameState = GameState.gameover;
-                Instantiate(boms, transform.position, Quaternion.identity); //”š”­ƒGƒtƒFƒNƒg‚Ì”­¶
-                Destroy(gameObject, 0.5f); //­‚µŠÔ·‚Å©•ª‚ğÁ–Å
+                Instantiate(boms, transform.position, Quaternion.identity); //ï¿½ï¿½ï¿½ï¿½ï¿½Gï¿½tï¿½Fï¿½Nï¿½gï¿½Ì”ï¿½ï¿½ï¿½
+                Destroy(gameObject, 0.5f); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôï¿½ï¿½Åï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             }
-            //recoverTime‚ÌŠÔ‚ğİ’è
+            //recoverTimeï¿½Ìï¿½ï¿½Ô‚ï¿½İ’ï¿½
             recoverTime = StunDuration;
-            //ÚG‚µ‚½Enemy‚ğíœ
+            //ï¿½ÚGï¿½ï¿½ï¿½ï¿½Enemyï¿½ï¿½ï¿½íœ
             Destroy(hit.gameObject);
         }
     }
 
-    //“_–Åˆ—
+    //ï¿½_ï¿½Åï¿½ï¿½ï¿½
     void Blinking()
     {
-        //‚»‚Ì‚ÌƒQ[ƒ€isŠÔ‚Å³‚©•‰‚©‚Ì’l‚ğZo
+        //ï¿½ï¿½ï¿½Ìï¿½ï¿½ÌƒQï¿½[ï¿½ï¿½ï¿½iï¿½sï¿½ï¿½ï¿½Ô‚Åï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì’lï¿½ï¿½ï¿½Zï¿½o
         float val = Mathf.Sin(Time.time * 50);
-        //³‚ÌüŠú‚È‚ç•\¦
+        //ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½È‚ï¿½\ï¿½ï¿½
         if (val >= 0) body.SetActive(true);
-        //•‰‚ÌüŠú‚È‚ç”ñ•\¦
+        //ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½È‚ï¿½ï¿½\ï¿½ï¿½
         else body.SetActive(false);
     }
 
+    //SEï¿½Äï¿½
+    public void SEPlay(SEType type)
+    {
+        switch (type)
+        {
+            case SEType.Shot:
+                GetComponent<AudioSource>().PlayOneShot(se_shot);
+                break;
+            case SEType.Damage:
+                GetComponent<AudioSource>().PlayOneShot(se_damage);
+                break;
+            case SEType.Jump:
+                GetComponent<AudioSource>().PlayOneShot(se_jump);
+                break;
+        }
+    }
 }
