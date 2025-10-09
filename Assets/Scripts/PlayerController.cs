@@ -15,14 +15,14 @@ public class PlayerController : MonoBehaviour
     Vector3 moveDirection = Vector3.zero;
     int targetLane;
 
-    public float gravity = 9.81f; //�d��
+    public float gravity = 9.81f; //重力
 
-    public float speedZ = 10; //�O�i�����̃X�s�[�h�̏���l
-    public float accelerationZ = 8; //�����x
+    public float speedZ = 10; //前進方向のスピードの上限値
+    public float accelerationZ = 8; //加速度
 
-    public float speedX = 10; //�������Ɉړ�����Ƃ��̃X�s�[�h
+    public float speedX = 10; //横方向に移動するときのスピード
 
-    public float speedJump = 10; //�W�����v�X�s�[�h
+    public float speedJump = 10; //ジャンプスピード
 
     public GameObject body;
 
@@ -42,7 +42,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        //�Q�[���X�e�[�^�X��playing�̎��̂ݍ��E�ɓ�������
+        //ゲームステータスがplayingの時のみ左右に動かせる
         if (GameManager.gameState == GameState.playing)
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) MoveToLeft();
@@ -50,44 +50,43 @@ public class PlayerController : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space)) Jump();
         }
 
-        //�����X�^������Life��0�Ȃ瓮�����~�߂�
+        //もしスタン中かLifeが0なら動きを止める
         if (IsStun())
         {
             moveDirection.x = 0;
             moveDirection.z = 0;
-            //�����܂ł̎��Ԃ��J�E���g
+            //復活までの時間をカウント
             recoverTime -= Time.deltaTime;
 
-            //�_�ŏ���
+            //点滅処理
             Blinking();
         }
         else
         {
-            //���X�ɉ�����Z�����ɏ�ɑO�i������
+            //徐々に加速しZ方向に常に前進させる
             float acceleratedZ = moveDirection.z + (accelerationZ * Time.deltaTime);
             moveDirection.z = Mathf.Clamp(acceleratedZ, 0, speedZ);
 
-            //X�����͖ڕW�̃|�W�V�����܂ł̍����̊����ő��x���v�Z
+            //X方向は目標のポジションまでの差分の割合で速度を計算
             float ratioX = (targetLane * LaneWidth - transform.position.x) / LaneWidth;
             moveDirection.x = ratioX * speedX;
         }
 
-        //�d�͕��̗͂��t���[���ǉ�
+        //重力分の力をフレーム追加
         moveDirection.y -= gravity * Time.deltaTime;
 
-        //�ړ����s
+        //移動実行
         Vector3 globalDirection = transform.TransformDirection(moveDirection);
         controller.Move(globalDirection * Time.deltaTime);
 
-        //�ړ���ڒn���Ă���Y�����̑��x�̓��Z�b�g����
+        //移動後接地してたらY方向の速度はリセットする
         if (controller.isGrounded) moveDirection.y = 0;
 
-        //1�b��1���g�b�v�X�s�[�h�̏���l�������Ă���
+        //1秒に1ずつトップスピードの上限値が増えていく
         speedZ += Time.deltaTime;
-
     }
 
-    //���̃��[���Ɉړ����J�n
+    //左のレーンに移動を開始
     public void MoveToLeft()
     {
         if (IsStun()) return;
@@ -95,7 +94,7 @@ public class PlayerController : MonoBehaviour
             targetLane--;
     }
 
-    //�˂̃��[���Ɉړ����J�n
+    //⇒のレーンに移動を開始
     public void MoveToRight()
     {
         if (IsStun()) return;
@@ -103,11 +102,11 @@ public class PlayerController : MonoBehaviour
             targetLane++;
     }
 
-    //�W�����v
+    //ジャンプ
     public void Jump()
     {
         if (IsStun()) return;
-        //�n�ʂɐڐG���Ă����Y�����̗͂�ݒ�
+        //地面に接触していればY方向の力を設定
         if (controller.isGrounded)
         {
             SEPlay(SEType.Jump); //ジャンプ音を鳴らす
@@ -115,83 +114,84 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    //�̗͂����^�[��
+    //体力をリターン
     public int Life()
     {
         return life;
     }
 
-    //�X�^�������`�F�b�N
+    //スタン中かチェック
     bool IsStun()
     {
-        //recoverTime���쓮����Life��0�ɂȂ����ꍇ��Stun�t���O��ON
+        //recoverTimeが作動中かLifeが0になった場合はStunフラグがON
         bool stun = recoverTime > 0.0f || life <= 0;
-        //Stun�t���O��OFF�̏ꍇ�̓{�f�B���m���ɕ\��
+        //StunフラグがOFFの場合はボディを確実に表示
         if (!stun) body.SetActive(true);
-        //Stun�t���O�����^�[��
+        //Stunフラグをリターン
         return stun;
     }
 
-    //�ڐG����
+    //接触判定
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         if (IsStun()) return;
 
-        //�Ԃ��������肪Enemy�Ȃ�
+        //ぶつかった相手がEnemyなら
         if (hit.gameObject.CompareTag("Enemy"))
         {
-            //�̗͂��}�C�i�X
+            //体力をマイナス
             life--;
 
             SEPlay(SEType.Damage); //ダメージ音を鳴らす
 
-
-            //�X�s�[�h�����Z�b�g
+            //スピードをリセット
             speedZ = 10;
 
             if (life <= 0)
             {
                 SoundManager.instance.StopBgm(); //曲を止める
 
-                //�Q�[���I�[�o�[�ɂȂ������ɂ��̎��̃|�W�V����z�̍��W��Score�L�[���[�h�Ńp�\�R���ɕۑ�
+                //ゲームオーバーになった時にその時のポジションZの座標を
+                //Scoreキーワードでパソコンに保存
                 PlayerPrefs.SetFloat("Score", transform.position.z);
 
                 GameManager.gameState = GameState.gameover;
-                Instantiate(boms, transform.position, Quaternion.identity); //�����G�t�F�N�g�̔���
-                Destroy(gameObject, 0.5f); //�������ԍ��Ŏ���������
+                Instantiate(boms, transform.position, Quaternion.identity); //爆発エフェクトの発生
+                Destroy(gameObject, 0.5f); //少し時間差で自分を消滅
             }
-            //recoverTime�̎��Ԃ�ݒ�
+            //recoverTimeの時間を設定
             recoverTime = StunDuration;
-            //�ڐG����Enemy���폜
+            //接触したEnemyを削除
             Destroy(hit.gameObject);
         }
     }
 
-    //�_�ŏ���
+    //点滅処理
     void Blinking()
     {
-        //���̎��̃Q�[���i�s���ԂŐ��������̒l���Z�o
+        //その時のゲーム進行時間で正か負かの値を算出
         float val = Mathf.Sin(Time.time * 50);
-        //���̎����Ȃ�\��
+        //正の周期なら表示
         if (val >= 0) body.SetActive(true);
-        //���̎����Ȃ��\��
+        //負の周期なら非表示
         else body.SetActive(false);
     }
 
-    //SE�Đ�
+    //SE再生
     public void SEPlay(SEType type)
     {
         switch (type)
         {
             case SEType.Shot:
-                GetComponent<AudioSource>().PlayOneShot(se_shot);
+                audio.PlayOneShot(se_shot);
                 break;
             case SEType.Damage:
-                GetComponent<AudioSource>().PlayOneShot(se_damage);
+                audio.PlayOneShot(se_damage);
                 break;
             case SEType.Jump:
-                GetComponent<AudioSource>().PlayOneShot(se_jump);
+                audio.PlayOneShot(se_jump);
                 break;
         }
     }
+
 }
